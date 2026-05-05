@@ -193,18 +193,6 @@ export default function DashboardPage() {
       console.error("Access update error:", accessError)
       showMessage(`Error: ${accessError.message || "Failed to grant access"}`)
       return
-    }
-
-    // Mark an available unlock code as used
-    const codeType = receipt.payment_type
-    const availableCode = codes[codeType.toUpperCase() as "CBT" | "PDF"].available[0]
-
-    if (availableCode) {
-      await supabase
-        .from("unlock_codes")
-        .update({ used: true, used_by_email: receipt.email, used_at: now })
-        .eq("id", availableCode.id)
-    }
 
     setReceipts((prev) =>
       prev.map((r) => (r.id === receipt.id ? { ...r, status: "approved", reviewed_at: now } : r))
