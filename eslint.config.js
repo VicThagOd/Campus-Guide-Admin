@@ -1,35 +1,24 @@
-export default {
-  root: true,
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    ecmaFeatures: {
-      jsx: true,
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
+
+export default tseslint.config(
+  {
+    ignores: ['dist/**', 'node_modules/**'],
+  },
+  ...tseslint.configs.recommended,
+  {
+    plugins: {
+      'react-hooks': reactHooks,
     },
-    project: './tsconfig.json',
-    tsconfigRootDir: __dirname,
-  },
-  plugins: ['@typescript-eslint', 'react-hooks'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react-hooks/recommended',
-  ],
-  env: {
-    browser: true,
-    es2021: true,
-    node: true,
-  },
-  settings: {
-    react: {
-      version: 'detect',
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+      },
     },
   },
-  rules: {
-    'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-  },
-}
+);
