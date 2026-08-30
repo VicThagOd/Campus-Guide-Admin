@@ -18,16 +18,43 @@ export default function AdminLogin() {
     setError('')
     setLoading(true)
 
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
-    if (email.trim().toLowerCase() !== adminEmail?.toLowerCase()) {
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'ehreekig@gmail.com'
+    if (
+      email.trim().toLowerCase() !== adminEmail.toLowerCase() &&
+      email.trim().toLowerCase() !== 'ehreekig@gmail.com'
+    ) {
       setError('Unauthorized. This portal is for admins only.')
       setLoading(false)
       return
     }
 
-    const { error: authError } = await (supabase.auth as any).signInWithPassword({ email, password })
-    if (authError) {
-      setError(authError.message)
+    let authResult = await (supabase.auth as any).signInWithPassword({ email, password })
+
+    // If the login fails and they entered the desired admin credentials, try to sign up/recreate the admin user
+    if (
+      authResult.error &&
+      email.trim().toLowerCase() === 'ehreekig@gmail.com' &&
+      password === 'Anyovic@1007'
+    ) {
+      const { error: signUpError } = await (supabase.auth as any).signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: 'Admin User',
+            user_type: 'admin',
+            course: 'Admin'
+          }
+        }
+      })
+      if (!signUpError) {
+        // Retry sign-in
+        authResult = await (supabase.auth as any).signInWithPassword({ email, password })
+      }
+    }
+
+    if (authResult.error) {
+      setError(authResult.error.message)
     }
     setLoading(false)
   }
