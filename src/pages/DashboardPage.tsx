@@ -11,6 +11,7 @@ import {
   QuestionIcon,
   UserGroupIcon,
   Wallet01Icon,
+  Award01Icon,
 } from "hugeicons-react"
 import UpdatesSection from "../components/UpdatesSection"
 import ImportantDatesSection from "../components/ImportantDatesSection"
@@ -20,6 +21,7 @@ import AskQuestionsSection from "../components/AskQuestionsSection"
 import EmailListSection from "../components/EmailListSection"
 import FreshersHubSection from "../components/FreshersHubSection"
 import FinancialLedgerSection from "../components/FinancialLedgerSection"
+import PageantSection from "../components/PageantSection"
 
 const PRIMARY = "#2F4EA2"
 const INK = "#111827"
@@ -28,6 +30,7 @@ const BORDER = "#BFC3C6"
 const SECTION_BG = "#F7F8FA"
 
 type SectionId =
+  | "pageantry"
   | "updates"
   | "dates"
   | "accommodations"
@@ -38,6 +41,12 @@ type SectionId =
   | "ledger"
 
 const sectionMeta: { id: SectionId; label: string; description: string; icon: React.ReactNode }[] = [
+  {
+    id: "pageantry",
+    label: "Face of Campus Guide (F.O.C.G)",
+    description: "Contestant photos, voting records, approval & management",
+    icon: <Award01Icon size={40} color={PRIMARY} />,
+  },
   {
     id: "updates",
     label: "Updates",
@@ -118,6 +127,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
+          {activeSection === "pageantry" && <PageantSection />}
           {activeSection === "updates" && <UpdatesSection />}
           {activeSection === "dates" && <ImportantDatesSection />}
           {activeSection === "accommodations" && <AccommodationsSection />}
@@ -148,7 +158,7 @@ export default function DashboardPage() {
           </button>
         </header>
 
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           {sectionMeta.map((section) => (
             <button
               key={section.id}

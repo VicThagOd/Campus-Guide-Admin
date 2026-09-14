@@ -18,40 +18,14 @@ export default function AdminLogin() {
     setError('')
     setLoading(true)
 
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'ehreekig@gmail.com'
-    if (
-      email.trim().toLowerCase() !== adminEmail.toLowerCase() &&
-      email.trim().toLowerCase() !== 'ehreekig@gmail.com'
-    ) {
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'onyib4m@gmail.com'
+    if (email.trim().toLowerCase() !== adminEmail.toLowerCase()) {
       setError('Unauthorized. This portal is for admins only.')
       setLoading(false)
       return
     }
 
-    let authResult = await (supabase.auth as any).signInWithPassword({ email, password })
-
-    // If the login fails and they entered the desired admin credentials, try to sign up/recreate the admin user
-    if (
-      authResult.error &&
-      email.trim().toLowerCase() === 'ehreekig@gmail.com' &&
-      password === 'Anyovic@1007'
-    ) {
-      const { error: signUpError } = await (supabase.auth as any).signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: 'Admin User',
-            user_type: 'admin',
-            course: 'Admin'
-          }
-        }
-      })
-      if (!signUpError) {
-        // Retry sign-in
-        authResult = await (supabase.auth as any).signInWithPassword({ email, password })
-      }
-    }
+    const authResult = await (supabase.auth as any).signInWithPassword({ email, password })
 
     if (authResult.error) {
       setError(authResult.error.message)
@@ -64,7 +38,7 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         <div className="mb-6">
           <button
-            onClick={() => (window.location.href = 'http://localhost:5173')}
+            onClick={() => (window.location.href = '/')}
             className="flex items-center gap-1.5 rounded-lg border px-4 py-1.5 text-sm font-semibold transition-colors duration-150 hover:bg-white"
             style={{ color: PRIMARY, border: `1px solid ${BORDER}` }}
           >
