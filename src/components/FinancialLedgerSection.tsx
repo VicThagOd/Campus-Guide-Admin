@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { RefreshCw, DollarSign, BookOpen, Key, Home, Calendar, Search } from 'lucide-react'
+import { RefreshIcon, Wallet01Icon, Book01Icon, Key01Icon, House01Icon, Calendar03Icon, Search01Icon } from 'hugeicons-react'
 
 const PRIMARY = '#2F4EA2'
 const INK = '#111827'
@@ -39,7 +39,7 @@ export default function FinancialLedgerSection() {
       const profileNameMap = new Map(profiles?.map((p) => [p.id, p.name]) || [])
       const profileEmailMap = new Map(profiles?.map((p) => [p.id, p.email]) || [])
 
-      // 2. Fetch Processed Webhooks (representing Flutterwave webhook purchases for CBT/PDF)
+      // 2. Fetch Processed Webhooks
       const { data: webhooks, error: webhooksErr } = await supabase
         .from('processed_webhooks')
         .select('id, trans_ref, product_type, user_id, created_at')
@@ -47,14 +47,14 @@ export default function FinancialLedgerSection() {
 
       if (webhooksErr) console.error('Webhooks fetch error:', webhooksErr)
 
-      // 3. Fetch Hostel Inspection payments (representing Flutterwave webhook verified inspections)
+      // 3. Fetch Hostel Inspection payments
       const { data: inspections, error: inspectErr } = await supabase
         .from('inspection_payments')
         .select('id, user_id, amount, payment_reference, created_at, accommodations(title)')
 
       if (inspectErr) console.error('Inspections fetch error:', inspectErr)
 
-      // 4. Fetch Event Ticket sales (representing Flutterwave webhook verified tickets)
+      // 4. Fetch Event Ticket sales
       const { data: tickets, error: ticketErr } = await supabase
         .from('event_tickets')
         .select('id, user_id, payment_reference, created_at, tier_name, tier_price, events(title, ticket_price)')
@@ -63,7 +63,6 @@ export default function FinancialLedgerSection() {
 
       const items: LedgerItem[] = []
 
-      // Add Webhook CBT / PDF entries
       webhooks?.forEach((wh: any) => {
         const studentName = profileNameMap.get(wh.user_id) || 'Student'
         const studentEmail = profileEmailMap.get(wh.user_id) || 'N/A'
@@ -93,7 +92,6 @@ export default function FinancialLedgerSection() {
         }
       })
 
-      // Add Inspection payments
       inspections?.forEach((ins: any) => {
         const studentName = profileNameMap.get(ins.user_id) || 'Student'
         const studentEmail = profileEmailMap.get(ins.user_id) || 'N/A'
@@ -109,7 +107,6 @@ export default function FinancialLedgerSection() {
         })
       })
 
-      // Add Tickets payments
       tickets?.forEach((t: any) => {
         const studentName = profileNameMap.get(t.user_id) || 'Student'
         const studentEmail = profileEmailMap.get(t.user_id) || 'N/A'
@@ -125,7 +122,6 @@ export default function FinancialLedgerSection() {
         })
       })
 
-      // Sort all by date descending
       items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       setLedger(items)
     } catch (err: any) {
@@ -145,7 +141,6 @@ export default function FinancialLedgerSection() {
   if (timeWindow === 'month') windowStart.setMonth(windowStart.getMonth() - 1)
   const windowedLedger = timeWindow === 'all' ? ledger : ledger.filter((item) => new Date(item.date) >= windowStart)
 
-  // Aggregate totals follow the selected reporting window.
   const totalCbt = windowedLedger.filter((i) => i.type === 'cbt').reduce((sum, i) => sum + i.amount, 0)
   const totalPdf = windowedLedger.filter((i) => i.type === 'pdf').reduce((sum, i) => sum + i.amount, 0)
   const totalInspection = windowedLedger.filter((i) => i.type === 'inspection').reduce((sum, i) => sum + i.amount, 0)
@@ -153,18 +148,18 @@ export default function FinancialLedgerSection() {
   const overallTotal = totalCbt + totalPdf + totalInspection + totalTickets
 
   const filteredItems = windowedLedger.filter((item) => {
+    const searchLower = searchTerm.toLowerCase()
     const matchesSearch =
-      item.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase())
+      item.studentName.toLowerCase().includes(searchLower) ||
+      item.studentEmail.toLowerCase().includes(searchLower) ||
+      item.reference.toLowerCase().includes(searchLower) ||
+      item.description.toLowerCase().includes(searchLower)
 
     const matchesType = filterType === 'all' || item.type === filterType
 
     return matchesSearch && matchesType
   })
 
-  // Format date helper
   const formatDateStr = (dateStr: string) => {
     const d = new Date(dateStr)
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
@@ -175,19 +170,20 @@ export default function FinancialLedgerSection() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: INK }}>
-            Financial Ledger & Breakdown
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: INK }}>
+            Financial Ledger
           </h2>
-          <p className="text-sm" style={{ color: MUTED }}>
-            View total cash flow breakdown from post-UTME practice keys, PDFs, accommodation inspections, and event tickets.
+          <p className="text-sm mt-1" style={{ color: MUTED }}>
+            Real-time audit log of all payments and income across Campus Guide features.
           </p>
         </div>
+
         <button
           onClick={fetchLedgerData}
           className="inline-flex items-center gap-2 rounded-lg border bg-white px-3.5 py-2 text-sm font-semibold transition-colors hover:bg-slate-50 self-start sm:self-auto"
           style={{ borderColor: BORDER, color: INK }}
         >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          <RefreshIcon size={16} className={loading ? 'animate-spin' : ''} />
           Refresh
         </button>
       </div>
@@ -197,35 +193,35 @@ export default function FinancialLedgerSection() {
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-blue-600 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Total Revenue</span>
-            <DollarSign size={18} style={{ color: PRIMARY }} />
+            <Wallet01Icon size={18} style={{ color: PRIMARY }} />
           </div>
           <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{overallTotal.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-indigo-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">CBT Practice</span>
-            <Key size={18} className="text-indigo-500" />
+            <Key01Icon size={18} className="text-indigo-500" />
           </div>
           <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalCbt.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-teal-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">PDF Questions</span>
-            <BookOpen size={18} className="text-teal-500" />
+            <Book01Icon size={18} className="text-teal-500" />
           </div>
           <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalPdf.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-amber-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Inspections</span>
-            <Home size={18} className="text-amber-500" />
+            <House01Icon size={18} className="text-amber-500" />
           </div>
           <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalInspection.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-pink-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Event Tickets</span>
-            <Calendar size={18} className="text-pink-500" />
+            <Calendar03Icon size={18} className="text-pink-500" />
           </div>
           <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalTickets.toLocaleString()}</p>
         </div>
@@ -246,7 +242,7 @@ export default function FinancialLedgerSection() {
         </div>
         <div className="flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: BORDER }}>
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-400" />
+            <Search01Icon size={18} className="absolute left-3 top-2.5 text-slate-400" />
             <input
               type="text"
               placeholder="Search by student, email, reference or item..."
