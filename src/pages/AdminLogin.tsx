@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
 import { Alert02Icon, ArrowLeft01Icon, Loading01Icon, LockIcon } from 'hugeicons-react'
 
 const PRIMARY = '#2F4EA2'
@@ -7,30 +6,29 @@ const INK = '#111827'
 const MUTED = '#6B7280'
 const BORDER = '#BFC3C6'
 
-export default function AdminLogin() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+export default function AdminLogin({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
+  const [masterKey, setMasterKey] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'onyib4m@gmail.com'
-    if (email.trim().toLowerCase() !== adminEmail.toLowerCase()) {
-      setError('Unauthorized. This portal is for admins only.')
+    const expectedKey = 'Aluta Continua'
+    if (masterKey.trim().toLowerCase() === expectedKey.toLowerCase()) {
+      localStorage.setItem('cg_admin_auth', 'true')
       setLoading(false)
-      return
+      if (onLoginSuccess) {
+        onLoginSuccess()
+      } else {
+        window.location.reload()
+      }
+    } else {
+      setError('Invalid Master Key. Please enter the correct admin access key.')
+      setLoading(false)
     }
-
-    const authResult = await (supabase.auth as any).signInWithPassword({ email, password })
-
-    if (authResult.error) {
-      setError(authResult.error.message)
-    }
-    setLoading(false)
   }
 
   return (
@@ -52,10 +50,10 @@ export default function AdminLogin() {
             Campus Guide
           </h1>
           <p className="text-lg font-semibold tracking-tight" style={{ color: INK }}>
-            Admin Portal
+            Admin Portal Access
           </p>
           <p style={{ color: MUTED, fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            Sign in to manage the Campus Guide ecosystem
+            Enter the Admin Master Key to open the dashboard
           </p>
         </div>
 
@@ -69,34 +67,17 @@ export default function AdminLogin() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="mb-2 block" style={{ color: INK, fontWeight: 500 }}>
-                Admin Email
+              <label htmlFor="masterKey" className="mb-2 block text-sm font-medium" style={{ color: INK }}>
+                Admin Master Key
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                style={{ color: INK, backgroundColor: '#FFFFFF' }}
-                placeholder="admin@campusguide.ng"
-                autoComplete="email"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="mb-2 block" style={{ color: INK, fontWeight: 500 }}>
-                Password
-              </label>
-              <input
-                id="password"
+                id="masterKey"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={masterKey}
+                onChange={(e) => setMasterKey(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{ color: INK, backgroundColor: '#FFFFFF' }}
-                placeholder="Enter your password"
+                placeholder="Enter Master Key"
                 autoComplete="current-password"
                 required
               />
@@ -105,18 +86,18 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg py-3 font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg py-3 font-medium text-white transition-all hover:opacity-90 disabled:opacity-50 text-sm"
               style={{ backgroundColor: PRIMARY }}
             >
               {loading ? (
                 <>
                   <Loading01Icon size={18} className="animate-spin" />
-                  Signing in...
+                  Verifying...
                 </>
               ) : (
                 <>
                   <LockIcon size={18} />
-                  Sign In
+                  Access Admin Dashboard
                 </>
               )}
             </button>

@@ -60,6 +60,75 @@ export default function PageantSection() {
   const [modalPhotoTab, setModalPhotoTab] = useState<"cover" | "seated" | "standing">("cover")
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+  // Pageant Settings State
+  const [settingsId, setSettingsId] = useState<string | null>(null)
+  const [regOpen, setRegOpen] = useState(true)
+  const [regEndDate, setRegEndDate] = useState("2026-09-24T23:59")
+  const [votingLive, setVotingLive] = useState(false)
+  const [votingStartDate, setVotingStartDate] = useState("")
+  const [votingEndDate, setVotingEndDate] = useState("")
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [settingsSuccess, setSettingsSuccess] = useState(false)
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await supabase.from("pageant_settings").select("*").limit(1)
+      if (data && data[0]) {
+        const s = data[0]
+        setSettingsId(s.id)
+        setRegOpen(!!s.registration_open)
+        setVotingLive(!!s.voting_live)
+        if (s.registration_end_date) {
+          const d = new Date(s.registration_end_date)
+          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+          setRegEndDate(iso)
+        }
+        if (s.voting_start_date) {
+          const d = new Date(s.voting_start_date)
+          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+          setVotingStartDate(iso)
+        }
+        if (s.voting_end_date) {
+          const d = new Date(s.voting_end_date)
+          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+          setVotingEndDate(iso)
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching pageant settings:", err)
+    }
+  }
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingSettings(true)
+    setSettingsSuccess(false)
+    try {
+      const payload: any = {
+        registration_open: regOpen,
+        voting_live: votingLive,
+        registration_end_date: regEndDate ? new Date(regEndDate).toISOString() : null,
+        voting_start_date: votingStartDate ? new Date(votingStartDate).toISOString() : null,
+        voting_end_date: votingEndDate ? new Date(votingEndDate).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      }
+
+      if (settingsId) {
+        await supabase.from("pageant_settings").update(payload).eq("id", settingsId)
+      } else {
+        const { data } = await supabase.from("pageant_settings").insert(payload).select().single()
+        if (data) setSettingsId(data.id)
+      }
+
+      setSettingsSuccess(true)
+      setTimeout(() => setSettingsSuccess(false), 4000)
+    } catch (err: any) {
+      alert("Failed to save pageant schedule settings: " + err.message)
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   const fetchContestants = async () => {
     setLoading(true)
     setError(null)
@@ -80,6 +149,7 @@ export default function PageantSection() {
 
   useEffect(() => {
     fetchContestants()
+    fetchSettings()
   }, [])
 
   const handleDeleteContestant = async (contestant: PageantContestant) => {
@@ -162,12 +232,15 @@ export default function PageantSection() {
             Mr & Miss Campus Guide Pageantry
           </h1>
           <p className="mt-1 text-sm" style={{ color: MUTED }}>
-            View live votes, inspect contestant portfolios, toggle approval, and delete registrations.
+            Configure registration/voting dates, view live votes, inspect portfolios, and manage contestants.
           </p>
         </div>
 
         <button
-          onClick={fetchContestants}
+          onClick={() => {
+            fetchContestants()
+            fetchSettings()
+          }}
           disabled={loading}
           className="flex items-center gap-1.5 self-start rounded-lg border px-4 py-2 text-sm font-semibold transition-colors duration-150 hover:bg-white sm:self-auto"
           style={{ borderColor: BORDER, color: PRIMARY }}
@@ -182,6 +255,99 @@ export default function PageantSection() {
           {error}
         </div>
       )}
+
+      {/* Schedule & Access Controls Card */}
+      <form onSubmit={handleSaveSettings} className="rounded-xl border bg-white p-5 shadow-sm space-y-4" style={{ borderColor: BORDER }}>
+        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "#E5E7EB" }}>
+          <div>
+            <h3 className="text-base font-bold text-gray-900">Pageant Schedule & Access Control</h3>
+            <p className="text-xs text-gray-500">Set when registration and voting open/close on the student site.</p>
+          </div>
+          {settingsSuccess && (
+            <span className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 animate-pulse">
+              ✓ Settings saved!
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Registration Window */}
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-800">Registration Access</span>
+              <button
+                type="button"
+                onClick={() => setRegOpen(!regOpen)}
+                className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                  regOpen ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
+                }`}
+              >
+                {regOpen ? "Registration OPEN" : "Registration CLOSED"}
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Registration Deadline (Target Date for Live Timer)
+              </label>
+              <input
+                type="datetime-local"
+                value={regEndDate}
+                onChange={(e) => setRegEndDate(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-[#2F4EA2] focus:outline-none"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">This drives the countdown timer on the registration page.</p>
+            </div>
+          </div>
+
+          {/* Voting Window */}
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-800">Voting Access</span>
+              <button
+                type="button"
+                onClick={() => setVotingLive(!votingLive)}
+                className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                  votingLive ? "bg-emerald-600 text-white" : "bg-amber-600 text-white"
+                }`}
+              >
+                {votingLive ? "Voting LIVE" : "Voting OFF"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Voting Starts</label>
+                <input
+                  type="datetime-local"
+                  value={votingStartDate}
+                  onChange={(e) => setVotingStartDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs focus:border-[#2F4EA2] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Voting Closes</label>
+                <input
+                  type="datetime-local"
+                  value={votingEndDate}
+                  onChange={(e) => setVotingEndDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs focus:border-[#2F4EA2] focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit"
+            disabled={savingSettings}
+            className="rounded-lg px-6 py-2 bg-[#2F4EA2] text-white text-xs font-bold hover:bg-blue-800 transition-colors disabled:opacity-50"
+          >
+            {savingSettings ? "Saving Settings..." : "Save Schedule & Controls"}
+          </button>
+        </div>
+      </form>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

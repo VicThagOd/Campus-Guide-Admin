@@ -101,7 +101,9 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
 
   const handleLogout = async () => {
+    localStorage.removeItem('cg_admin_auth')
     await (supabase.auth as any).signOut()
+    window.location.reload()
   }
 
   if (activeSection) {
