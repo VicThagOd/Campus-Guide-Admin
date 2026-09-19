@@ -43,6 +43,31 @@ export default function InspectionPaymentsSection() {
 
   useEffect(() => {
     fetchPayments()
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+
+    const channel = supabase
+      .channel('realtime:inspection_payments')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'inspection_payments' },
+        (payload: any) => {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('🏠 New Inspection Payment!', {
+              body: `A student just paid ₦${Number(payload.new.amount || 5000).toLocaleString()} for hostel inspection (${payload.new.whatsapp_number || 'WhatsApp'}).`,
+              icon: '/favicon-32x32.png',
+            })
+          }
+          fetchPayments()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   return (
