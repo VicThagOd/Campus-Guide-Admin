@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/pushalert/:path*",
+      "destination": "https://api.pushalert.co/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

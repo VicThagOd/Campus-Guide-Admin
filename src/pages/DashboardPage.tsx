@@ -22,6 +22,7 @@ import EmailListSection from "../components/EmailListSection"
 import FreshersHubSection from "../components/FreshersHubSection"
 import FinancialLedgerSection from "../components/FinancialLedgerSection"
 import PageantSection from "../components/PageantSection"
+import PushNotificationsSection from "../components/PushNotificationsSection"
 
 const PRIMARY = "#2F4EA2"
 const INK = "#111827"
@@ -30,6 +31,7 @@ const BORDER = "#BFC3C6"
 const SECTION_BG = "#F7F8FA"
 
 type SectionId =
+  | "notifications"
   | "pageantry"
   | "updates"
   | "dates"
@@ -41,6 +43,12 @@ type SectionId =
   | "ledger"
 
 const sectionMeta: { id: SectionId; label: string; description: string; icon: React.ReactNode }[] = [
+  {
+    id: "notifications",
+    label: "Push Notifications",
+    description: "Broadcast instant alerts & messages to all student devices",
+    icon: <Notification03Icon size={40} color={PRIMARY} />,
+  },
   {
     id: "pageantry",
     label: "Face of Campus Guide (F.O.C.G)",
@@ -129,6 +137,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
+          {activeSection === "notifications" && <PushNotificationsSection />}
           {activeSection === "pageantry" && <PageantSection />}
           {activeSection === "updates" && <UpdatesSection />}
           {activeSection === "dates" && <ImportantDatesSection />}
