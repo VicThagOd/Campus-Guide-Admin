@@ -19,7 +19,6 @@
     "react-router-dom": "^7.14.2"
   },
   "devDependencies": {
-    "@esbuild/win32-x64": "^0.28.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
