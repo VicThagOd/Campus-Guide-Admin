@@ -195,35 +195,35 @@ export default function FinancialLedgerSection() {
             <span className="text-xs font-bold uppercase tracking-wider">Total Revenue</span>
             <Wallet01Icon size={18} style={{ color: PRIMARY }} />
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{overallTotal.toLocaleString()}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums" style={{ color: INK, fontVariantNumeric: "tabular-nums" }}>₦{overallTotal.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-indigo-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">CBT Practice</span>
             <Key01Icon size={18} className="text-indigo-500" />
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalCbt.toLocaleString()}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums" style={{ color: INK, fontVariantNumeric: "tabular-nums" }}>₦{totalCbt.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-teal-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">PDF Questions</span>
             <Book01Icon size={18} className="text-teal-500" />
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalPdf.toLocaleString()}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums" style={{ color: INK, fontVariantNumeric: "tabular-nums" }}>₦{totalPdf.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-amber-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Inspections</span>
             <House01Icon size={18} className="text-amber-500" />
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalInspection.toLocaleString()}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums" style={{ color: INK, fontVariantNumeric: "tabular-nums" }}>₦{totalInspection.toLocaleString()}</p>
         </div>
         <div className="rounded-xl border bg-white p-5 shadow-sm border-l-4 border-l-pink-500 transition-all hover:shadow-md" style={{ borderColor: BORDER }}>
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Event Tickets</span>
             <Calendar03Icon size={18} className="text-pink-500" />
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight" style={{ color: INK }}>₦{totalTickets.toLocaleString()}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight tabular-nums" style={{ color: INK, fontVariantNumeric: "tabular-nums" }}>₦{totalTickets.toLocaleString()}</p>
         </div>
       </div>
 
@@ -328,7 +328,7 @@ export default function FinancialLedgerSection() {
                     <td className="px-5 py-4 text-xs text-slate-700 max-w-[200px] truncate md:max-w-xs">
                       {item.description}
                     </td>
-                    <td className="px-5 py-4 text-right font-bold text-slate-900">
+                    <td className="px-5 py-4 text-right font-bold text-slate-900 tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
                       ₦{item.amount.toLocaleString()}
                     </td>
                     <td className="px-5 py-4 text-xs font-mono text-slate-500 hidden lg:table-cell">

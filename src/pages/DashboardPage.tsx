@@ -12,6 +12,7 @@ import {
   UserGroupIcon,
   Wallet01Icon,
   Award01Icon,
+  Key01Icon,
 } from "hugeicons-react"
 import UpdatesSection from "../components/UpdatesSection"
 import ImportantDatesSection from "../components/ImportantDatesSection"
@@ -23,6 +24,7 @@ import FreshersHubSection from "../components/FreshersHubSection"
 import FinancialLedgerSection from "../components/FinancialLedgerSection"
 import PageantSection from "../components/PageantSection"
 import PushNotificationsSection from "../components/PushNotificationsSection"
+import PostUtmeCodesSection from "../components/PostUtmeCodesSection"
 
 const PRIMARY = "#2F4EA2"
 const INK = "#111827"
@@ -31,6 +33,7 @@ const BORDER = "#BFC3C6"
 const SECTION_BG = "#F7F8FA"
 
 type SectionId =
+  | "codes"
   | "notifications"
   | "pageantry"
   | "updates"
@@ -98,6 +101,12 @@ const sectionMeta: { id: SectionId; label: string; description: string; icon: Re
     icon: <GraduationScrollIcon size={40} color={PRIMARY} />,
   },
   {
+    id: "codes",
+    label: "Post-UTME & CBT Codes",
+    description: "Voucher key generator, usable stock feed and code management",
+    icon: <Key01Icon size={40} color={PRIMARY} />,
+  },
+  {
     id: "ledger",
     label: "Financial Ledger",
     description: "Aggregated CBT, PDF, inspection, and ticket cash flows",
@@ -137,6 +146,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
+          {activeSection === "codes" && <PostUtmeCodesSection />}
           {activeSection === "notifications" && <PushNotificationsSection />}
           {activeSection === "pageantry" && <PageantSection />}
           {activeSection === "updates" && <UpdatesSection />}
