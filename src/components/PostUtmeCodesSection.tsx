@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   Key01Icon,
@@ -58,6 +58,14 @@ export default function PostUtmeCodesSection() {
   const [generating, setGenerating] = useState(false)
   const [generatedBatch, setGeneratedBatch] = useState<string[]>([])
 
+  // Stats state from database
+  const [stats, setStats] = useState({
+    usableCbt: 0,
+    usablePdf: 0,
+    usedCount: 0,
+    total: 0,
+  })
+
   // Reviving dormant code tracker
   const [revivingId, setRevivingId] = useState<string | null>(null)
 
@@ -65,11 +73,45 @@ export default function PostUtmeCodesSection() {
     setLoading(true)
     setError(null)
     try {
-      const { data, error: err } = await supabase
-        .from('unlock_codes')
-        .select('*')
-        .order('used', { ascending: true })
+      // 1. Fetch exact total metrics across all rows (bypasses 1000 limit)
+      const [cbtCountRes, pdfCountRes, usedCountRes] = await Promise.all([
+        supabase.from('unlock_codes').select('*', { count: 'exact', head: true }).eq('used', false).eq('type', 'cbt'),
+        supabase.from('unlock_codes').select('*', { count: 'exact', head: true }).eq('used', false).eq('type', 'pdf'),
+        supabase.from('unlock_codes').select('*', { count: 'exact', head: true }).eq('used', true),
+      ])
 
+      const usableCbt = cbtCountRes.count || 0
+      const usablePdf = pdfCountRes.count || 0
+      const usedCount = usedCountRes.count || 0
+
+      setStats({
+        usableCbt,
+        usablePdf,
+        usedCount,
+        total: usableCbt + usablePdf + usedCount,
+      })
+
+      // 2. Fetch targeted rows based on active tab and search query
+      let query = supabase.from('unlock_codes').select('*')
+
+      if (tab === 'usable_all') {
+        query = query.eq('used', false).order('code', { ascending: true })
+      } else if (tab === 'usable_cbt') {
+        query = query.eq('used', false).eq('type', 'cbt').order('code', { ascending: true })
+      } else if (tab === 'usable_pdf') {
+        query = query.eq('used', false).eq('type', 'pdf').order('code', { ascending: true })
+      } else if (tab === 'used') {
+        query = query.eq('used', true).order('used_at', { ascending: false, nullsFirst: false })
+      }
+
+      if (search.trim()) {
+        const q = search.trim()
+        query = query.or(`code.ilike.%${q}%,used_by_email.ilike.%${q}%`)
+      }
+
+      query = query.limit(200)
+
+      const { data, error: err } = await query
       if (err) throw err
       setCodes(data || [])
     } catch (err: any) {
@@ -81,51 +123,7 @@ export default function PostUtmeCodesSection() {
 
   useEffect(() => {
     fetchCodes()
-  }, [])
-
-  // Metrics
-  const stats = useMemo(() => {
-    let usableCbt = 0
-    let usablePdf = 0
-    let usedCount = 0
-
-    codes.forEach((c) => {
-      if (!c.used) {
-        if (c.type === 'cbt') usableCbt++
-        else usablePdf++
-      } else {
-        usedCount++
-      }
-    })
-
-    return { usableCbt, usablePdf, usedCount, total: codes.length }
-  }, [codes])
-
-  // Filtered list
-  const filteredCodes = useMemo(() => {
-    let list = codes
-
-    if (tab === 'usable_all') {
-      list = list.filter((c) => !c.used)
-    } else if (tab === 'usable_cbt') {
-      list = list.filter((c) => !c.used && c.type === 'cbt')
-    } else if (tab === 'usable_pdf') {
-      list = list.filter((c) => !c.used && c.type === 'pdf')
-    } else if (tab === 'used') {
-      list = list.filter((c) => c.used)
-    }
-
-    if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      list = list.filter(
-        (c) =>
-          c.code.toLowerCase().includes(q) ||
-          (c.used_by_email && c.used_by_email.toLowerCase().includes(q))
-      )
-    }
-
-    return list
-  }, [codes, tab, search])
+  }, [tab, search])
 
   // Copy code utility
   const copyToClipboard = (text: string, label = 'Code copied to clipboard') => {
@@ -138,22 +136,25 @@ export default function PostUtmeCodesSection() {
     }, 2500)
   }
 
-  // Copy batch of usable codes
-  const copyBatch = (count: number) => {
-    const pool = codes.filter((c) => {
-      if (c.used) return false
-      if (tab === 'usable_cbt') return c.type === 'cbt'
-      if (tab === 'usable_pdf') return c.type === 'pdf'
-      return true
-    })
+  // Copy batch of usable codes directly from database pool
+  const copyBatch = async (count: number) => {
+    try {
+      let query = supabase.from('unlock_codes').select('code').eq('used', false)
+      if (tab === 'usable_cbt') query = query.eq('type', 'cbt')
+      if (tab === 'usable_pdf') query = query.eq('type', 'pdf')
+      query = query.limit(count)
 
-    if (pool.length === 0) {
-      setError('No usable codes matching current view to copy.')
-      return
+      const { data, error: err } = await query
+      if (err || !data || data.length === 0) {
+        setError('No usable codes matching current view to copy.')
+        return
+      }
+
+      const selected = data.map((c) => c.code)
+      copyToClipboard(selected.join('\n'), `Copied ${selected.length} usable codes to clipboard`)
+    } catch (err: any) {
+      setError(err?.message || 'Failed to copy batch')
     }
-
-    const selected = pool.slice(0, count).map((c) => c.code)
-    copyToClipboard(selected.join('\n'), `Copied ${selected.length} usable codes to clipboard`)
   }
 
   // Handle generating new codes
@@ -508,7 +509,7 @@ export default function PostUtmeCodesSection() {
           <div className="py-16 text-center text-sm" style={{ color: MUTED }}>
             Loading codes catalog...
           </div>
-        ) : filteredCodes.length === 0 ? (
+        ) : codes.length === 0 ? (
           <div className="py-16 text-center">
             <Key01Icon size={32} className="mx-auto text-gray-300" />
             <p className="mt-2 text-sm font-semibold" style={{ color: INK }}>
@@ -531,7 +532,7 @@ export default function PostUtmeCodesSection() {
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: BORDER }}>
-                {filteredCodes.slice(0, 100).map((item) => (
+                {codes.slice(0, 100).map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                     {/* Code display */}
                     <td className="py-3 px-4">
@@ -634,9 +635,9 @@ export default function PostUtmeCodesSection() {
               </tbody>
             </table>
 
-            {filteredCodes.length > 100 && (
+            {codes.length > 100 && (
               <div className="p-3 text-center text-xs font-medium border-t" style={{ borderColor: BORDER, color: MUTED }}>
-                Showing first 100 of {filteredCodes.length} codes. Use search to find specific items.
+                Showing first 100 of {codes.length} matching codes. Use search to find specific items.
               </div>
             )}
           </div>
